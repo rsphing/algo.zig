@@ -1,6 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const TreeNode = @import("binary_tree.zig").TreeNode;
+const binary_tree = @import("binary_tree.zig");
+const TreeNode = binary_tree.TreeNode;
 
 pub fn BinarySearchTree(comptime T: type) type {
     return struct {
@@ -20,14 +21,17 @@ pub fn BinarySearchTree(comptime T: type) type {
             _ = self;
         }
 
+        fn createNode(self: *Self, val: T) !*TreeNode(T) {
+            return binary_tree.createNode(T, self.gpa, val);
+        }
+
         pub fn fromSlice(self: *Self, slice: []T) !void {
             const build = (struct {
                 fn _build(gpa: Allocator, sl: []T) !?*TreeNode(T) {
                     if (sl.len == 0) return null;
 
                     var mid = sl.len / 2;
-                    var node = try gpa.create(TreeNode(T));
-                    node.* = .{ .data = sl[mid] };
+                    var node = try binary_tree.createNode(T, gpa, sl[mid]);
 
                     if (mid >= 1) node.left = try _build(gpa, sl[0..mid]);
                     node.right = try _build(gpa, sl[mid + 1 ..]);
@@ -57,9 +61,7 @@ pub fn BinarySearchTree(comptime T: type) type {
 
         pub fn insert(self: *Self, val: T) !void {
             if (self.root == null) {
-                var tmp = try self.gpa.create(TreeNode(T));
-                tmp.* = .{ .data = val };
-                self.root = tmp;
+                self.root = try self.createNode(val);
                 return;
             }
 
@@ -77,8 +79,7 @@ pub fn BinarySearchTree(comptime T: type) type {
                 }
             }
 
-            var tmp = try self.gpa.create(TreeNode(T));
-            tmp.* = .{ .data = val };
+            var tmp = try self.createNode(val);
             if (pre.?.data > val) {
                 pre.?.left = tmp;
             } else {
@@ -143,7 +144,7 @@ pub fn main() !void {
 
     var nums = [_]u32{ 8, 4, 12, 2, 6, 10, 14, 1, 3, 5, 7, 9, 11, 13, 15 };
 
-    for (nums) |num| {
+    inline for (nums) |num| {
         try bstree.insert(num);
     }
     //try bstree.fromSlice(&nums);

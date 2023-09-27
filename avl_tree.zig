@@ -19,17 +19,17 @@ pub fn AVLTree(comptime T: type) type {
             _ = self;
         }
 
-        pub fn height(node: ?*TreeNode(T)) isize {
-            return if (node == null) -1 else @as(isize, node.?.height);
+        pub fn height(node: ?*TreeNode(T)) i32 {
+            return if (node == null) -1 else @as(i32, node.?.height);
         }
 
         pub fn balanceFactor(node: ?*TreeNode(T)) i32 {
             if (node == null) return 0;
-            return @as(i32, height(node.?.left)) - @as(i32, height(node.?.right));
+            return height(node.?.left) - height(node.?.right);
         }
 
         fn updateHeight(node: *TreeNode(T)) void {
-            node.height = @as(usize, @max(height(node.left), height(node.right)) + 1);
+            node.height = @as(@TypeOf(node.height), @max(height(node.left), height(node.right)) + 1);
         }
 
         pub fn search(self: *Self, val: T) ?*TreeNode(T) {
@@ -92,6 +92,18 @@ pub fn AVLTree(comptime T: type) type {
             }
 
             return node;
+        }
+
+        pub fn insert(self: *Self, val: T) !void {
+            self.root = try insertImpl(self.gpa, self.root, val);
+        }
+
+        fn insertImpl(gpa: Allocator, node: ?*TreeNode(T), val: T) !*TreeNode(T) {
+            if (node == null) {
+                var tmp = gpa.create(TreeNode(T));
+                tmp.* = .{ .data = val };
+                return tmp;
+            }
         }
     };
 }

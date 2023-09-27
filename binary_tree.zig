@@ -6,10 +6,16 @@ pub fn TreeNode(comptime T: type) type {
         const Self = @This();
 
         data: T = undefined,
-        height: usize = 0,
+        height: u32 = 0,
         left: ?*Self = null,
         right: ?*Self = null,
     };
+}
+
+pub fn createNode(comptime T: type, gpa: Allocator, val: T) !*TreeNode(T) {
+    var node = try gpa.create(TreeNode(T));
+    node.* = .{ .data = val };
+    return node;
 }
 
 pub fn arrToTree(comptime T: type, allocator: Allocator, arr: []T) !?*TreeNode(T) {
@@ -23,8 +29,7 @@ pub fn arrToTree(comptime T: type, allocator: Allocator, arr: []T) !?*TreeNode(T
     while (size > 0) : (size -= 1) {
         var pos = size - 1;
 
-        var node = try allocator.create(TreeNode(T));
-        node.* = .{ .data = arr[pos] };
+        var node = try createNode(T, allocator, arr[pos]);
 
         var child_pos = 2 * pos + 1;
         if (pending.fetchRemove(child_pos)) |kv| {
