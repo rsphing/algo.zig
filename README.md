@@ -1,1 +1,2 @@
-# helloalgo.zig
+# algo.zig
+algorithm learning
