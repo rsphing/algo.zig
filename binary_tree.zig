@@ -6,7 +6,7 @@ pub fn TreeNode(comptime T: type) type {
         const Self = @This();
 
         data: T = undefined,
-        height: u32 = 0,
+        height: i32 = 0,
         left: ?*Self = null,
         right: ?*Self = null,
     };
