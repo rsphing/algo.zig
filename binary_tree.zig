@@ -51,3 +51,10 @@ pub fn arrToTree(comptime T: type, allocator: Allocator, arr: []T) !?*TreeNode(T
 
     return root;
 }
+
+pub fn destroyTree(comptime T: type, gpa: Allocator, node: ?*TreeNode(T)) void {
+    node orelse return;
+    destroyTree(T, gpa, node.?.left);
+    destroyTree(T, gpa, node.?.right);
+    gpa.destroy(node.?);
+}
