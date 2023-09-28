@@ -18,11 +18,7 @@ pub fn BinarySearchTree(comptime T: type) type {
         }
 
         pub fn deinit(self: *Self) void {
-            _ = self;
-        }
-
-        fn createNode(self: *Self, val: T) !*TreeNode(T) {
-            return binary_tree.createNode(T, self.gpa, val);
+            binary_tree.destroyTree(T, self.gpa, self.root);
         }
 
         pub fn fromSlice(self: *Self, slice: []T) !void {
@@ -61,7 +57,7 @@ pub fn BinarySearchTree(comptime T: type) type {
 
         pub fn insert(self: *Self, val: T) !void {
             if (self.root == null) {
-                self.root = try self.createNode(val);
+                self.root = try binary_tree.createNode(T, self.gpa, val);
                 return;
             }
 
@@ -79,7 +75,7 @@ pub fn BinarySearchTree(comptime T: type) type {
                 }
             }
 
-            var tmp = try self.createNode(val);
+            var tmp = try binary_tree.createNode(T, self.gpa, val);
             if (pre.?.data > val) {
                 pre.?.left = tmp;
             } else {

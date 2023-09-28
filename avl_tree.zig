@@ -1,6 +1,7 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
-const TreeNode = @import("binary_tree.zig").TreeNode;
+const binary_tree = @import("binary_tree.zig");
+const TreeNode = binary_tree.TreeNode;
 
 pub fn AVLTree(comptime T: type) type {
     return struct {
@@ -99,10 +100,40 @@ pub fn AVLTree(comptime T: type) type {
         }
 
         fn insertImpl(gpa: Allocator, node: ?*TreeNode(T), val: T) !*TreeNode(T) {
-            if (node == null) {
-                var tmp = gpa.create(TreeNode(T));
-                tmp.* = .{ .data = val };
-                return tmp;
+            if (node == null) return binary_tree.createNode(T, gpa, val);
+
+            if (node.?.data > val) {
+                node.?.left = insertImpl(gpa, node.?.left, val);
+            } else if (node.?.data < val) {
+                node.?.right = insertImpl(gpa, node.?.right, val);
+            } else {
+                return node;
+            }
+
+            updateHeight(node);
+            return rotate(node);
+        }
+
+        pub fn remove(self: *Self, val: T) void {
+            self.root = removeImpl(self.gpa, self.root, val);
+        }
+
+        fn removeImpl(gpa: Allocator, node: ?*TreeNode(T), val: T) ?*TreeNode(T) {
+            if (node == null) return null;
+
+            if (node.?.data > val) {
+                node.?.left = removeImpl(gpa, node.?.left, val);
+            } else if (node.?.data < val) {
+                node.?.right = removeImpl(gpa, node.?.right, val);
+            } else {
+                if (node.?.left == null or node.?.right == null) {}
+                var cur = node.?.right;
+                while (cur.?.left != null) {
+                    cur = cur.?.left;
+                }
+
+                var tmp_val = cur.?.data;
+                node.?.right = removeImpl(gpa, node.?.right, tmp_val);
             }
         }
     };
