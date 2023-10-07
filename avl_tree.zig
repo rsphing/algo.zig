@@ -17,7 +17,7 @@ pub fn AVLTree(comptime T: type) type {
         }
 
         pub fn deinit(self: *Self) void {
-            _ = self;
+            binary_tree.destroyTree(T, self.gpa, self.root);
         }
 
         pub fn height(node: ?*TreeNode(T)) i32 {
