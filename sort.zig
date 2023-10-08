@@ -139,6 +139,79 @@ pub fn ListMergeSort(comptime T: type) type {
     };
 }
 
+pub fn countingSort(slice: []u32) !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+
+    var max: usize = 0;
+    for (slice) |el| {
+        if (el > max) max = @intCast(el);
+    }
+
+    var counter = try allocator.alloc(usize, max + 1);
+    defer allocator.free(counter);
+    @memset(counter, 0);
+
+    for (slice) |el| {
+        counter[@intCast(el)] += 1;
+    }
+
+    for (0..max) |i| {
+        counter[i + 1] += counter[i];
+    }
+
+    var tmp = try allocator.dupe(u32, slice);
+    defer allocator.free(tmp);
+
+    var pos = tmp.len;
+    while (pos > 0) : (pos -= 1) {
+        var num = tmp[pos - 1];
+        counter[num] -= 1;
+        slice[counter[num]] = num;
+    }
+}
+
+inline fn digit(el: u32, exp: u32) usize {
+    return @intCast(@rem(@divFloor(el, exp), 10));
+}
+
+fn countingSortDigit(gpa: std.mem.Allocator, slice: []u32, exp: u32) !void {
+    var counter = [_]u32{0} ** 10;
+    for (slice) |el| {
+        counter[digit(el, exp)] += 1;
+    }
+
+    for (1..10) |i| {
+        counter[i] += counter[i - 1];
+    }
+
+    var tmp = try gpa.dupe(u32, slice);
+    defer gpa.free(tmp);
+
+    var pos = tmp.len;
+    while (pos > 0) : (pos -= 1) {
+        var num = tmp[pos - 1];
+        var d = digit(num, exp);
+        counter[d] -= 1;
+        slice[counter[d]] = num;
+    }
+}
+
+pub fn radixSort(slice: []u32) !void {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+
+    var max: usize = 0;
+    for (slice) |el| {
+        if (el > max) max = @intCast(el);
+    }
+
+    var exp: u32 = 1;
+    while (exp <= max) : (exp *= 10) {
+        try countingSortDigit(allocator, slice, exp);
+    }
+}
+
 pub fn main() !void {
     const printSlice = @import("print_util.zig").printSlice;
 
@@ -172,4 +245,12 @@ pub fn main() !void {
     while (it) |ptr| : (it = it.?.next) {
         std.debug.print("{d}{s}", .{ ptr.data, if (ptr.next != null) ", " else "\n" });
     }
+
+    var arr5 = [_]u32{ 1, 0, 1, 2, 0, 4, 0, 2, 2, 4 };
+    try countingSort(&arr5);
+    printSlice(u32, &arr5);
+
+    var arr6 = [_]u32{ 10546151, 35663510, 42865989, 34862445, 81883077, 88906420, 72429244, 30524779, 82060337, 63832996 };
+    try radixSort(&arr6);
+    printSlice(u32, &arr6);
 }
